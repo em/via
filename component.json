@@ -1,0 +1,33 @@
+{
+  "name": "via",
+  "description": "RFP library for node and browser",
+  "repo": "recurly/via",
+  "version": "0.0.0",
+  "keywords": [],
+  "dependencies": {},
+  "development": {},
+  "license": "MIT",
+  "scripts": [
+    "index.js",
+    "lib/via.js",
+    "lib/utils.js",
+    "lib/events.js",
+    "lib/object.js",
+    "lib/uri.js",
+    "lib/window.js",
+    "lib/element.js",
+    "lib/elements/index.js",
+    "lib/elements/page.js",
+    "lib/elements/page_links.js",
+    "lib/attributes/index.js",
+    "lib/attributes/data-class.js",
+    "lib/attributes/data-text.js",
+    "lib/attributes/data-html.js",
+    "lib/attributes/data-list.js",
+    "lib/attributes/data-for.js",
+    "lib/api.js",
+    "lib/model.js",
+    "lib/collection.js",
+    "lib/collection_page.js"
+  ]
+}

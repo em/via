@@ -1,0 +1,17 @@
+{
+    "name": "via"
+  , "version": "0.0.0"
+  , "dependencies": {
+    "request": "*"
+  },
+  "devDependencies": {
+      "mocha": "1.12"
+    , "mocha-phantomjs": "3.1"
+    , "nib": "*"
+    , "should": "*"
+    , "expect": "*"
+    , "chai": "*"
+    , "stylus": "0.x.x"
+    , "jade": "0.17.x"
+  }
+}
