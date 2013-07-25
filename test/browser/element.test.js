@@ -13,7 +13,6 @@ describe('Via.Element', function() {
     expect(ui.rootElement.outerHTML).eq(custom.template);
   });
 
-
   it('can be replaced directly with another custom element', function() {
     var a = function() {};
     a.template = '<div class="a"></div>';
@@ -55,4 +54,15 @@ describe('Via.Element', function() {
     var ui = new Via.Element({}, {elements: {custom: custom}, template: template});
     expect(ui.rootElement.outerHTML).eq('<div class="custom"></div>');
   });
+
+  it('synthesizes element data from attributes', function() {
+    var template = '<custom a="path" b="literal!"></custom>';
+    var custom = function(ui, data) {
+      return '<div class="custom"></div>';
+    };
+    var ui = new Via.Element({path: 'value'}, {elements: {custom: custom}, template: template});
+    expect(ui.data.a).eq('value');
+    expect(ui.data.b).eq('literal');
+  });
+
 });

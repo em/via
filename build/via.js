@@ -779,13 +779,18 @@ ReactiveObject.prototype = {
     var optional = [];
 
     // Prefix the attributes with root
-    multi = utils.map(multi, function(a) {
-      if(a[a.length-1] === '?') {
-        a = a.slice(0,-1)
-        optional.push(a);
+    multi = utils.map(multi, function(attr) {
+
+      if(attr.slice(-1) === '!') {
+        return attr;
       }
 
-      return 'root.'+a;
+      if(attr.slice(-1) === '?') {
+        attr = attr.slice(0,-1)
+        optional.push(attr);
+      }
+
+      return 'root.'+attr;
     });
 
     // Updater function we call when any invalidation occurs
@@ -796,7 +801,13 @@ ReactiveObject.prototype = {
 
       var allDefined = true;
       var args = utils.map(multi, function(attr) {
-        var val = container.get(attr);
+        var val;
+        if(attr.slice(-1) === '!') {
+          val = attr.slice(0,-1);
+        }
+        else {
+          val = container.get(attr);
+        }
         if(val === undefined)
           allDefined = false;
         return val;
@@ -813,6 +824,11 @@ ReactiveObject.prototype = {
     }
 
     utils.each(multi, function(i,attr) {
+
+      if(attr.slice(-1) === '!') {
+        return;
+      }
+
       utils.traverse(container, attr, function(deepObj, deepAttr,
                   nearestEmitter, shortestPath, remainingPath) {
 
@@ -1120,8 +1136,11 @@ function ReactiveElement(data, options) {
     var elemattrs = {};
     for(var i=0, attrs=this.rootElement.attributes,
          l=attrs.length; i < l; i++) {
-      var attr = attrs.item(i);
-      elemattrs[attr.nodeName] = attr.nodeValue;
+      var attr = attrs.item(i)
+        , k = attr.nodeName, v = attr.nodeValue;
+      elemattrs[k] = v;
+
+      this.data.synth(attr.nodeName, attr.nodeValue);
     }
 
     if(this.rootElement.children.length) {
@@ -1143,6 +1162,7 @@ function ReactiveElement(data, options) {
       this.rootElement = result;
     }
   }
+
 
   this.build();
   return this;

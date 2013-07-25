@@ -103,6 +103,14 @@ describe('Via.Object', function() {
       });
     });
 
+    it('accepts literals with "!" suffix', function(done) {
+      cat.watch('first_name 10!', function(name,num) {
+        expect(name).eq('Fluffy');
+        expect(num).eq('10');
+        done();
+      });
+    });
+
     describe('#stop', function() {
       it('removes all events', function() {
         var obj = new Via.Object({name: 'Fluffy'});
@@ -144,6 +152,7 @@ describe('Via.Object', function() {
       expect(obj.get('a')).eq(2);
     });
   });
+
 });
 
 
