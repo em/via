@@ -1096,11 +1096,12 @@ function ReactiveElement(data, options) {
     options.template = options.template.outerHTML;
   }
 
-  if(data instanceof ReactiveObject) {
+  // Accept direct data if it has a symbolic name
+  // by assigning it to an empty object with a single
+  // property of that name
+  if(data.symbolicName) {
     var name = data.symbolicName();
     this.data.set(name, data);
-
-    options.tagName = options.tagName || name;
   }
   else if(typeof data === 'object') {
     this.data.set(data);
@@ -1123,7 +1124,7 @@ function ReactiveElement(data, options) {
       elemattrs[attr.nodeName] = attr.nodeValue;
     }
 
-    if( $(this.rootElement).children().length ) {
+    if(this.rootElement.children.length) {
       this.template = this.rootElement.innerHTML;
     }
     else if(implFn.template) {
@@ -1161,15 +1162,22 @@ ReactiveElement.prototype = new ReactiveObject({
     
     // TODO: More efficient approach using querySelectorAll if available
     function recurseChildren(node) {
-      for (var i = 0; i < node.childNodes.length; i++) {
-        var child = node.childNodes[i];
-        var tagName = child.tagName && child.tagName.toLowerCase();
-        if(self.elements[tagName]) {
-          var template = child.outerHTML;
-          var childUI = new ReactiveElement({parent: self.data}, {template: template, parent: self});
-          $(child).replaceWith(childUI.rootElement);
+      var tagName = node.tagName && node.tagName.toLowerCase();
+
+      if(self.elements[tagName]) {
+        var template = node.outerHTML;
+        var newElem = new ReactiveElement({parent: self.data}, {template: template, parent: self});
+        if(node === self.rootElement) {
+          self.rootElement = newElem.rootElement;
         }
         else {
+          node.parentNode.insertBefore(newElem.rootElement, node);
+          node.parentNode.removeChild(node);
+        }
+      }
+      else {
+        for (var i = 0; i < node.childNodes.length; i++) {
+          var child = node.childNodes[i];
           recurseChildren(child);
         }
       }

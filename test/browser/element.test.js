@@ -5,15 +5,25 @@ describe('Via.Element', function() {
     expect(ui.rootElement.outerHTML).eq('<test></test>');
   });
 
-  it('TODO: uses default template for the data', function() {
-    // var data = {
-    //   symbolicName: function() {
-    //     return 'test';
-    //   }
-    // };
+  it('uses default template defined on custom element', function() {
+     var custom = function() {};
+     custom.template = '<div class="custom"></div>';
+     var template = '<custom></custom>';
+     var ui = new Via.Element({}, {elements: {custom: custom}, template: template});
+    expect(ui.rootElement.outerHTML).eq(custom.template);
+  });
 
-    // var ui = new Via.Element({}, elem);
-    // expect(ui.rootElement.innerHTML).eq('<test></test>');
+
+  it('can be replaced directly with another custom element', function() {
+    var a = function() {};
+    a.template = '<div class="a"></div>';
+    var b = function() {};
+    b.template = '<div class="b"></div>';
+
+
+    var template = '<a><b></b></a>';
+    var ui = new Via.Element({}, {elements: {a:a,b:b}, template: template});
+    expect(ui.rootElement.outerHTML).eq(b.template);
   });
 
   it('accepts template as second argument', function() {
@@ -44,6 +54,5 @@ describe('Via.Element', function() {
     };
     var ui = new Via.Element({}, {elements: {custom: custom}, template: template});
     expect(ui.rootElement.outerHTML).eq('<div class="custom"></div>');
-
   });
 });
