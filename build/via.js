@@ -1078,7 +1078,11 @@ function ReactiveElement(data, options) {
 
   var parent = options.parent || this;
 
-  this.data = new ReactiveObject({ui:this, url: Via.window.location});
+  this.data = new ReactiveObject({
+    ui: this
+  , url: Via.window.location
+  });
+
   this.children = {};
 
   function Elements() {}
@@ -1140,8 +1144,12 @@ function ReactiveElement(data, options) {
         , k = attr.nodeName, v = attr.nodeValue;
       elemattrs[k] = v;
 
-      this.data.synth(attr.nodeName, attr.nodeValue);
+      this.data.synth(k, 'parent.'+v);
+
+      // Default any undefined values to the literal attribute value
+      if(!this.data[k]) this.data.set(k,v);
     }
+
 
     if(this.rootElement.children.length) {
       this.template = this.rootElement.innerHTML;
@@ -1266,16 +1274,17 @@ module.exports = {
 });
 require.register("via/lib/elements/page.js", function(module, exports, require){
 module.exports = function page(ui,attrs) {
-  ui.data.synth('collection', 'parent.'+attrs.collection); 
 
-  ui.data.get('collection', function(collection) {
-    ui.data.set('page', collection.page(attrs.size));
+  this.data.synth('page', 'collection size', function(c,size) {
+    var page = c.page(size);
 
-    if(attrs.number)
-      ui.data.synth('page.number', 'parent.'+attrs.number); 
+    ui.data.synth('page.size', 'size');
+    ui.data.synth('page.number', 'number');
+
+    return page;
   });
 
-  ui.data.synth('info', 'page.number page.length page.total page.size',
+  this.data.synth('info', 'page.number page.length page.total page.size',
                 function(n, length, total, size) {
     if(length === total)
       return 'Showing ' + total + ' of ' + total;
@@ -1284,8 +1293,6 @@ module.exports = function page(ui,attrs) {
     var b = a+length-1;
     return 'Showing ' + a + '-' + b + ' of ' + total;
   });
-
-  return ui;
 };
 
 

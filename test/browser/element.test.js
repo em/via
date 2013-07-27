@@ -56,11 +56,11 @@ describe('Via.Element', function() {
   });
 
   it('synthesizes element data from attributes', function() {
-    var template = '<custom a="path" b="literal!"></custom>';
+    var template = '<custom a="path" b="literal"></custom>';
     var custom = function(ui, data) {
       return '<div class="custom"></div>';
     };
-    var ui = new Via.Element({path: 'value'}, {elements: {custom: custom}, template: template});
+    var ui = new Via.Element({parent:{path: 'value'}}, {elements: {custom: custom}, template: template});
     expect(ui.data.a).eq('value');
     expect(ui.data.b).eq('literal');
   });

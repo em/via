@@ -103,7 +103,7 @@ describe('Via.Object', function() {
       });
     });
 
-    it('accepts literals with "!" suffix', function(done) {
+    it('forces literals with "!" suffix', function(done) {
       cat.watch('first_name 10!', function(name,num) {
         expect(name).eq('Fluffy');
         expect(num).eq('10');

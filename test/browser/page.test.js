@@ -1,7 +1,7 @@
 describe('<page>', function() {
   var cats = new Via.Collection(Cat, 'cats/', {}, catsAPI);
   var template = '<page collection="cats" size=1><div><page_links></page_links></div></page>';
-  var data = {parent:{cats:cats}}
+  var data = {parent:{cats:cats}};
   var ui = new Via.Element(data, template);
 
   it('synthesizes page from collection', function() {
