@@ -1377,6 +1377,7 @@ var index = [
 , 'html'
 , 'for'
 , 'class'
+, 'val'
 ];
 
 for(var i=0,l=index.length; i < l; ++i) {
@@ -1504,6 +1505,24 @@ module.exports = function(ui,value) {
     }
   });
 
+};
+
+});
+require.register("via/lib/attributes/data-val.js", function(module, exports, require){
+/**
+ * Bind an input val to a synthetic attribute 
+ */
+module.exports = function(ui,value) {
+  var $elem = $(this);
+
+  ui.data.watch(value, function(v) {
+    $elem.val(v);
+  });
+
+  $elem.change(function() {
+    console.log(ui, value, $elem.val());
+    ui.data.set(value, $elem.val());
+  });
 };
 
 });

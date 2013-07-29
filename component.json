@@ -25,6 +25,7 @@
     "lib/attributes/data-html.js",
     "lib/attributes/data-list.js",
     "lib/attributes/data-for.js",
+    "lib/attributes/data-val.js",
     "lib/api.js",
     "lib/model.js",
     "lib/collection.js",
