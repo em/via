@@ -1,5 +1,5 @@
 STYLUS = ./node_modules/stylus/bin/stylus -u nib
-JS_SOURCES = *.js lib/*.js lib/elements/*.js
+JS_SOURCES = *.js lib/*.js lib/elements/*.js lib/attributes/*.js
 HTML_SOURCES = lib/elements/templates/*.html
 COMPONENT_SOURCES = component.json $(JS_SOURCES) 
 

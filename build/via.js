@@ -1378,6 +1378,7 @@ var index = [
 , 'for'
 , 'class'
 , 'val'
+, 'toggle'
 ];
 
 for(var i=0,l=index.length; i < l; ++i) {
@@ -1393,12 +1394,21 @@ module.exports = function(ui,value) {
   var $elem = $(this);
 
   var prevClass; 
-  ui.data.watch(value, function(v) {
+  ui.data.watch(value, function(newV,preV) {
+    var newClass = newV;
+
+    var endOfPath = value.split('.').slice(-1)[0];
+    if(newV === true) { newClass = endOfPath; }
+    if(prevClass === true) { prevClass = endOfPath;}
+
     if(prevClass) {
       $elem.removeClass(prevClass);
     }
-    $elem.addClass(v);
-    prevClass = v; 
+    if(newClass) {
+      $elem.addClass(newClass);
+    }
+
+    prevClass = newClass; 
   });
 };
 
@@ -1524,6 +1534,20 @@ module.exports = function(ui,value) {
     ui.data.set(value, $elem.val());
   });
 };
+
+});
+require.register("via/lib/attributes/data-toggle.js", function(module, exports, require){
+/**
+ * Make the element toggle a property when clicked.
+ */
+module.exports = function(ui,value) {
+  $(this).click(function() {
+    var cur = ui.data.get(value);
+    ui.data.set(value, !cur);
+  });
+};
+
+
 
 });
 require.register("via/lib/api.js", function(module, exports, require){
