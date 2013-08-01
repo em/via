@@ -885,9 +885,12 @@ ReactiveObject.prototype = {
         }
 
         this.waiting = thenf;
+        fn.call(this, done);
+
       }
     , waiting: null
     , result: null
+    , done: done
     };
 
     function done(result) {
@@ -899,7 +902,6 @@ ReactiveObject.prototype = {
       obj.result = result;
     }
 
-    fn.call(this, done);
 
     return obj;
   }
@@ -924,14 +926,14 @@ ReactiveObject.prototype = {
     self.watch(input, function() {
       var result = fwdFn.apply(self, arguments);
 
-      if(result && result.then) {
-        result.then(function(result) {
-          self.set(output, result);
-        });
-      }
-      else {
-        self.set(output, result);
-      }
+      // if(result && result.then) {
+      //   result.then(function(result) {
+      //     self.set(output, result);
+      //   });
+      // }
+      // else {
+      self.set(output, result);
+      // }
     });
 
     if(revFn) {
@@ -1450,7 +1452,14 @@ module.exports = function(ui,value) {
   var $elem = $(this);
 
   ui.data.watch(value, function(v) {
-    $elem.html(v);
+    if(v.then) {
+      v.then(function(html) {
+        $elem.html(html);
+      });
+    }
+    else {
+      $elem.html(v);
+    }
 
   });
 };
