@@ -1083,8 +1083,6 @@ function ReactiveElement(data, options) {
   , url: Via.window.location
   });
 
-  this.children = {};
-
   function Elements() {}
   function Attributes() {}
   Elements.prototype = parent.elements;
@@ -1146,8 +1144,11 @@ function ReactiveElement(data, options) {
 
       this.data.synth(k, 'parent.'+v);
 
+      // if(k === 'array') { debugger; }
       // Default any undefined values to the literal attribute value
-      if(!this.data[k]) this.data.set(k,v);
+      if(!this.data[k]) {
+        this.data.set(k,v);
+      }
     }
 
 
@@ -1171,9 +1172,14 @@ function ReactiveElement(data, options) {
     }
   }
 
+  this.rootElement.__via_element = this;
 
   this.build();
   return this;
+};
+
+ReactiveElement.find = function(domElement) {
+  return domElement && domElement.__viaElement;
 };
 
 ReactiveElement.prototype = new ReactiveObject({
@@ -1379,6 +1385,7 @@ var index = [
 , 'class'
 , 'val'
 , 'toggle'
+, 'select'
 ];
 
 for(var i=0,l=index.length; i < l; ++i) {
@@ -1482,6 +1489,7 @@ module.exports = function(ui,value,template) {
 
       if(item) {
         var itemui = new ReactiveElement(item, template);
+        itemui.data.set('parent', ui.data);
         var $e = $(itemui.rootElement);
 
         window.dbinv = itemui;
@@ -1548,6 +1556,46 @@ module.exports = function(ui,value) {
 };
 
 
+
+});
+require.register("via/lib/attributes/data-select.js", function(module, exports, require){
+var ReactiveElement = require('../element');
+
+
+/**
+ * Bind a property to selection which can be set by clicking
+ * other [data-select="invoice"]
+ * TODO: Use delegation on the element associated
+ *       with the data that actually changes.
+ *       The path tells us the delegation root!
+ */
+
+module.exports = function(ui,attr) {
+
+  ui.data.watch('parent.selection', function(newV, preV) {
+
+    if( same(ui.data.get(attr), newV) ) {
+      ui.data.set('selected', true);
+    }
+    else {
+      ui.data.set('selected', false);
+    }
+  });
+
+  this.addEventListener('click', function(event) {
+    ui.data.set('parent.selection', ui.data.get(attr));
+  });
+}
+
+function same(a,b) {
+  if(a === b) return true;
+
+  if(a && typeof a.compare === 'function') {
+    return a.compare(b);
+  }
+
+  return false;
+}
 
 });
 require.register("via/lib/api.js", function(module, exports, require){
