@@ -787,7 +787,7 @@ ReactiveObject.prototype = {
 
       if(attr.slice(-1) === '?') {
         attr = attr.slice(0,-1)
-        optional.push(attr);
+        optional.push('root.'+attr);
       }
 
       return 'root.'+attr;
@@ -808,8 +808,9 @@ ReactiveObject.prototype = {
         else {
           val = container.get(attr);
         }
-        if(val === undefined)
+        if(val === undefined && utils.inArray(attr,optional) === -1) {
           allDefined = false;
+        }
         return val;
       });
 

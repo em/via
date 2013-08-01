@@ -103,6 +103,22 @@ describe('Via.Object', function() {
       });
     });
 
+    it('requires all inputs to be defined', function() {
+      var called = false;
+      cat.watch('first_name something_undefined', function(a,b) {
+        called = true;
+      });
+
+      expect(called).eq(false);
+    });
+
+    it('allows undefined inputs with a "?" suffix', function(done) {
+      cat.watch('first_name something_undefined?', function(a,b) {
+        expect(b).eq(undefined);
+        done();
+      });
+    });
+
     it('forces literals with "!" suffix', function(done) {
       cat.watch('first_name 10!', function(name,num) {
         expect(name).eq('Fluffy');
