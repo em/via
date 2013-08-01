@@ -1386,6 +1386,7 @@ var index = [
 , 'val'
 , 'toggle'
 , 'select'
+, 'onclick'
 ];
 
 for(var i=0,l=index.length; i < l; ++i) {
@@ -1596,6 +1597,24 @@ function same(a,b) {
 
   return false;
 }
+
+});
+require.register("via/lib/attributes/data-onclick.js", function(module, exports, require){
+module.exports = function(ui,attr) {
+  
+  this.addEventListener('click', function(e) {
+    var fn = ui.data.get(attr);
+
+    console.log(fn,attr);
+
+    if(typeof fn === 'function') {
+      fn();
+    }
+    else {
+      // error?
+    }
+  });
+};
 
 });
 require.register("via/lib/api.js", function(module, exports, require){

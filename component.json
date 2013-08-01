@@ -28,6 +28,7 @@
     "lib/attributes/data-val.js",
     "lib/attributes/data-toggle.js",
     "lib/attributes/data-select.js",
+    "lib/attributes/data-onclick.js",
     "lib/api.js",
     "lib/model.js",
     "lib/collection.js",
