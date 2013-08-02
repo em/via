@@ -17,7 +17,7 @@ describe('<page>', function() {
       });
 
       it('has correct links', function() {
-        var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+        var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
         var html = '<span class="previous_page disabled">Prev</span><em class="current">1</em><a data-page="2">2</a><a data-page="3">3</a><a class="link" data-page="2">Next</a>';
         expect(linksui.data.get('links')).eq(html);
       });
@@ -32,7 +32,7 @@ describe('<page>', function() {
       });
 
       it('has correct links', function() {
-        var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+        var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
         var html = '<a class="link" data-page="1">Prev</a><a data-page="1">1</a><em class="current">2</em><a data-page="3">3</a><a class="link" data-page="3">Next</a>';
         expect(linksui.data.get('links')).eq(html);
       });
@@ -47,7 +47,7 @@ describe('<page>', function() {
       });
 
       it('has correct links', function() {
-        var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+        var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
         var html = '<a class="link" data-page="2">Prev</a><a data-page="1">1</a><a data-page="2">2</a><em class="current">3</em><span class="next_page disabled">Next</span>';
         expect(linksui.data.get('links')).eq(html);
       });
@@ -64,7 +64,7 @@ describe('<page>', function() {
       });
 
       it('has correct links', function() {
-        var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+        var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
         var html = '<span class="previous_page disabled">Prev</span><em class="current">1</em><a data-page="2">2</a><a class="link" data-page="2">Next</a>';
         expect(linksui.data.get('links')).eq(html);
       });
@@ -79,7 +79,7 @@ describe('<page>', function() {
       });
 
       it('has correct links', function() {
-        var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+        var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
         var html = '<a class="link" data-page="1">Prev</a><a data-page="1">1</a><em class="current">2</em><span class="next_page disabled">Next</span>';
         expect(linksui.data.get('links')).eq(html);
       });
@@ -95,7 +95,7 @@ describe('<page>', function() {
     });
 
     it('has correct links', function() {
-      var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+      var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
       var html = '';
       expect(linksui.data.get('links')).eq(html);
     });
@@ -110,13 +110,9 @@ describe('<page>', function() {
     });
 
     it('has correct links', function() {
-      var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
+      var linksui =  $(ui.rootElement).find('.page_links')[0]._viaElement;
       var html = '';
       expect(linksui.data.get('links')).eq(html);
     });
-  });
-
-  describe('<page_links>', function() {
-    var linksui = $(ui.rootElement).find('.page_links').data('recurly_ui');
   });
 });

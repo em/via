@@ -185,7 +185,81 @@ require.relative = function(parent) {
   };
 
   return fn;
-};require.register("via/index.js", function(module, exports, require){
+};require.register("component-domify/index.js", function(module, exports, require){
+
+/**
+ * Expose `parse`.
+ */
+
+module.exports = parse;
+
+/**
+ * Wrap map from jquery.
+ */
+
+var map = {
+  option: [1, '<select multiple="multiple">', '</select>'],
+  optgroup: [1, '<select multiple="multiple">', '</select>'],
+  legend: [1, '<fieldset>', '</fieldset>'],
+  thead: [1, '<table>', '</table>'],
+  tbody: [1, '<table>', '</table>'],
+  tfoot: [1, '<table>', '</table>'],
+  colgroup: [1, '<table>', '</table>'],
+  caption: [1, '<table>', '</table>'],
+  tr: [2, '<table><tbody>', '</tbody></table>'],
+  td: [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+  th: [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  _default: [0, '', '']
+};
+
+/**
+ * Parse `html` and return the children.
+ *
+ * @param {String} html
+ * @return {Array}
+ * @api private
+ */
+
+function parse(html) {
+  if ('string' != typeof html) throw new TypeError('String expected');
+
+  // tag name
+  var m = /<([\w:]+)/.exec(html);
+  if (!m) throw new Error('No elements were generated.');
+  var tag = m[1];
+
+  // body support
+  if (tag == 'body') {
+    var el = document.createElement('html');
+    el.innerHTML = html;
+    return el.removeChild(el.lastChild);
+  }
+
+  // wrap map
+  var wrap = map[tag] || map._default;
+  var depth = wrap[0];
+  var prefix = wrap[1];
+  var suffix = wrap[2];
+  var el = document.createElement('div');
+  el.innerHTML = prefix + html + suffix;
+  while (depth--) el = el.lastChild;
+
+  var els = el.children;
+  if (1 == els.length) {
+    return el.removeChild(els[0]);
+  }
+
+  var fragment = document.createDocumentFragment();
+  while (els.length) {
+    fragment.appendChild(el.removeChild(els[0]));
+  }
+
+  return fragment;
+}
+
+});
+require.register("via/index.js", function(module, exports, require){
 module.exports = require('./lib/via');
 
 });
@@ -479,6 +553,18 @@ utils.extend = function() {
   return target;
 };
 
+utils.domify = require('domify');
+
+// TODO: Replace all uses with ReactiveURI
+utils.urlParams = function(params) {
+  var str = [];
+  for(var p in params) {
+    if(params[p] !== undefined) {
+      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(params[p]));
+    }
+  }
+  return str.join("&");
+}
 
 });
 require.register("via/lib/events.js", function(module, exports, require){
@@ -1068,11 +1154,6 @@ var ReactiveObject = require('./object')
   , globalElements = require('./elements')
   , globalAttributes = require('./attributes');
 
-// Only place we should be using jQuery 
-// TODO: Get rid of
-if(typeof jQuery !== 'undefined')
-  var $ = jQuery;
-
 /**
  * Represents a single UI instance for a model's ever changing data.
  */
@@ -1080,6 +1161,7 @@ function ReactiveElement(data, options) {
   options = options || {};
 
   var parent = options.parent || this;
+  var document = options.document || window.document;
 
   this.data = new ReactiveObject({
     ui: this
@@ -1132,7 +1214,7 @@ function ReactiveElement(data, options) {
   }
 
   this.template = options.template;
-  this.rootElement = $(this.template)[0];
+  this.rootElement = utils.domify(this.template);
 
   var rootTagName = this.rootElement.tagName.toLowerCase();
   var implFn = options.impl || this.elements[rootTagName];
@@ -1162,40 +1244,32 @@ function ReactiveElement(data, options) {
       this.template = implFn.template;
     }
 
-    this.rootElement = $(this.template).get(0);
+    this.rootElement = utils.domify(this.template);
 
     var result = implFn.call(this,
                     this, elemattrs, this.template);
 
     if(typeof result === 'string') {
-      this.rootElement = $(result).get(0);
+      this.rootElement = utils.domify(result);
     }
     else if(result && result.nodeName) {
       this.rootElement = result;
     }
   }
 
-  this.rootElement.__via_element = this;
+  this.rootElement._viaElement = this;
 
   this.build();
   return this;
 };
 
 ReactiveElement.find = function(domElement) {
-  return domElement && domElement.__viaElement;
+  return domElement && domElement._viaElement;
 };
 
 ReactiveElement.prototype = new ReactiveObject({
-  find: function(selector) {
-    return $(this.rootElement).find(selector);
-  }
- , build: function(options) {
+   build: function(options) {
     var self = this;
-
-    var $dom = $(this.rootElement);
-
-    $dom.data('recurly', self.data);
-    $dom.data('recurly_ui', self);
     
     // TODO: More efficient approach using querySelectorAll if available
     function recurseChildren(node) {
@@ -1224,16 +1298,16 @@ ReactiveElement.prototype = new ReactiveObject({
 
     // Any data- attributes we find in the template but don't have handlers for.
     // Make them map to the equivalent non-data attribute of the same name.
-    var matchedTplAttrs = $dom.html();
+    var matchedTplAttrs = this.rootElement.outerHTML;
     matchedTplAttrs = matchedTplAttrs && matchedTplAttrs.match(/data-(\w+)[^\w]/gi) || [];
     matchedTplAttrs = utils.map(matchedTplAttrs, function(match) {
       return match.match(/-(\w+)/)[1]; } );
     utils.each(matchedTplAttrs, function(i,attrName) {
       if(!self.attributes[attrName]) {
         self.attributes[attrName] = function(ui, keypath) {
-          var $elem = $(this);
+          var self = this;
           ui.data.watch(keypath, function(value) {
-            $elem.attr(attrName, value);
+            self.setAttribute(attrName, value);
           });
         }
       }
@@ -1252,22 +1326,22 @@ ReactiveElement.prototype = new ReactiveObject({
         if(impl.length !== i) continue;
 
         function buildAttr() {
-          var value = $(this).attr('data-'+attrName);
+          var value = this.getAttribute('data-'+attrName);
           var template = this.innerHTML;
           self.attributes[attrName].call(this, self, value, template);
-          
-          $(this).removeAttr('data-'+attrName);
+          this.removeAttribute('data-'+attrName);
         }
 
-        if($dom.is('[data-'+attrName+']')) {
+        if(this.rootElement.getAttribute('data-'+attrName)) {
           buildAttr.call(this.rootElement);
         }
 
-        $dom.find('[data-'+attrName+']').each(buildAttr);
+        var found = this.rootElement.querySelectorAll('[data-'+attrName+']');
+        for(var i2=0, l2 = found.length; i2 < l2; ++i2) {
+          buildAttr.call(found[i2]);
+        }
       }
     }
-
-    return $dom;
  }
  , elements: new ReactiveObject(globalElements)
  , attributes: new ReactiveObject(globalAttributes)
@@ -1308,16 +1382,15 @@ module.exports = function page(ui,attrs) {
 });
 require.register("via/lib/elements/page_links.js", function(module, exports, require){
 module.exports = function(ui,attrs) {
-  var $root = $(this.rootElement);
 
   // TODO: Should this be a generic thing?
   // Maybe this elem exists outside of page,
   // but nesting only makes "page" default to parent
   ui.data.synth('page', attrs.page || 'parent.page');
 
-  $root.on('click', 'a', function() {
-    ui.data.set('page.number', $(this).attr('data-page'));
-    ui.data.set('selected', this);
+  ui.rootElement.addEventListener('click', function(event) {
+    ui.data.set('page.number', event.target.getAttribute('data-page'));
+    ui.data.set('selected', event.target);
   });
 
   ui.data.synth('links', 'page page.total page.size page.number', function(page, total, size, n) {
@@ -1402,24 +1475,17 @@ require.register("via/lib/attributes/data-class.js", function(module, exports, r
  * Bind a class name to a synthetic attribute 
  */
 module.exports = function(ui,value) {
-  var $elem = $(this);
+  var elem = this;
 
-  var prevClass; 
+  var staticClass = elem.className;
   ui.data.watch(value, function(newV,preV) {
     var newClass = newV;
 
     var endOfPath = value.split('.').slice(-1)[0];
     if(newV === true) { newClass = endOfPath; }
-    if(prevClass === true) { prevClass = endOfPath;}
+    if(!newV) { newClass = '';}
 
-    if(prevClass) {
-      $elem.removeClass(prevClass);
-    }
-    if(newClass) {
-      $elem.addClass(newClass);
-    }
-
-    prevClass = newClass; 
+    elem.className = [staticClass,newClass].join(' ').trim();
   });
 };
 
@@ -1429,15 +1495,16 @@ require.register("via/lib/attributes/data-text.js", function(module, exports, re
  * Bind the innerText of a single element to a synthetic attribute
  */
 module.exports = function(ui,value) {
-  var $elem = $(this);
-  $elem.click(function() {
+  var elem = this;
+
+  elem.addEventListener('click', function() {
     console.log(ui);
   });
 
   ui.data.watch(value, function(v,p) {
     if(v === null) v = '';
-    $elem.text(''+v);
-    $elem.html($elem.html().replace(/\n/g,'<br/>'));
+    elem.innerText = ''+v;
+    elem.innerHTML = elem.innerHTML.replace(/\n/g,'<br/>');
   });
 };
 
@@ -1448,17 +1515,17 @@ require.register("via/lib/attributes/data-html.js", function(module, exports, re
 /**
  * Bind the innerHTML of an element to a synthetic attribute
  */
-module.exports = function(ui,value) {
-  var $elem = $(this);
+module.exports = function(ui,attr) {
+  var elem = this;
 
-  ui.data.watch(value, function(v) {
-    if(v.then) {
-      v.then(function(html) {
-        $elem.html(html);
+  ui.data.watch(attr, function(value) {
+    if(value.then) {
+      value.then(function(html) {
+        elem.innerHTML = html;
       });
     }
     else {
-      $elem.html(v);
+      elem.innerHTML = value;
     }
 
   });
@@ -1468,48 +1535,42 @@ module.exports = function(ui,value) {
 
 });
 require.register("via/lib/attributes/data-list.js", function(module, exports, require){
-var ReactiveElement = require('../element');
+var ReactiveElement = require('../element')
+  , utils = require('../utils');
 
 /**
  * Bind a collection to a repeating block scoped per item
  */
 module.exports = function(ui,value,template) {
-  var target = $(this).empty();
+  var target = this;
+  target.innerHTML = '';
 
   ui.data.watch(value, function(collection) {
     if(!collection) return;
 
     // Remove any element beyond the collection length
     collection.watch('length',function(length) {
-      var $list = $(target);
-      var $children = $list.children();
-      $children.each(function(i) {
-        if(i >= length) { 
-          $(this).remove();
-        }
-      });
+      for(var i=length, l = target.children.length-1; l >= i; --l) { 
+        target.removeChild(target.children[l]);
+      }
     });
 
     // Update or append as any numeric index changes
     collection.watch(/\d+/,function(i,item,prev) {
       if(item === undefined) return;
 
-      var $list = $(target);
-      var $children = $list.children();
-      var oldElem = $children.get(i);
+      var oldElem = target.children[i];
 
       if(item) {
         var itemui = new ReactiveElement(item, template);
         itemui.data.set('parent', ui.data);
-        var $e = $(itemui.rootElement);
-
-        window.dbinv = itemui;
 
         if(oldElem) {
-          $(oldElem).replaceWith($e);
+          target.insertBefore(itemui.rootElement, oldElem);
+          target.removeChild(oldElem);
         }
         else {
-          $e.appendTo(target);
+          target.appendChild(itemui.rootElement);
         }
       }
     });
@@ -1522,18 +1583,7 @@ module.exports = function(ui,value,template) {
 });
 require.register("via/lib/attributes/data-for.js", function(module, exports, require){
 module.exports = function(ui,value) {
-  var $root = $(this);
-  var $empty = $root.find('empty').remove().last().children().first();
-
-  ui.data.watch(value+'._http_status', function(status,prev) {
-    if(status == 404) {
-      $root.replaceWith($empty);
-    }
-    else if(prev == 404) {
-      $empty.replaceWith($root);
-    }
-  });
-
+  // TODO
 };
 
 });
@@ -1542,7 +1592,7 @@ require.register("via/lib/attributes/data-val.js", function(module, exports, req
  * Bind an input val to a synthetic attribute 
  */
 module.exports = function(ui,value) {
-  var $elem = $(this);
+  var elem = this;
 
   ui.data.watch(value, function(v) {
     $elem.val(v);
@@ -1559,13 +1609,12 @@ require.register("via/lib/attributes/data-toggle.js", function(module, exports, 
 /**
  * Make the element toggle a property when clicked.
  */
-module.exports = function(ui,value) {
-  $(this).click(function() {
-    var cur = ui.data.get(value);
-    ui.data.set(value, !cur);
+module.exports = function(ui,attr) {
+  this.addEventListener('click', function() {
+    var cur = ui.data.get(attr);
+    ui.data.set(attr, !cur);
   });
 };
-
 
 
 });
@@ -1664,7 +1713,7 @@ API.prototype = {
         js_version: exports.version
       });
 
-      url += '?' + jQuery.param(data);
+      url += '?' + utils.urlParams(data);
 
       url += '&' + Math.round(Math.random() * 0xffffffff);
 
@@ -2432,6 +2481,7 @@ Model.mixin(CollectionPage, {
 });
 
 });
+require.alias("component-domify/index.js", "via/deps/domify/index.js");
   if ("undefined" == typeof module) {
     window.Via = require("via");
   } else {

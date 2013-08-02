@@ -4,7 +4,9 @@
   "repo": "recurly/via",
   "version": "0.0.0",
   "keywords": [],
-  "dependencies": {},
+  "dependencies": {
+    "component/domify": "1.0.0"
+  },
   "development": {},
   "license": "MIT",
   "scripts": [
