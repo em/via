@@ -20,6 +20,29 @@ describe('Via.Object', function() {
     });
   });
 
+
+  describe('#set', function() {
+    it('accepts simple key/value arguments', function() {
+      cat.set('hello', 'world');
+      expect(cat.hello).eq('world');
+    });
+
+    it('accepts object and sets for each property', function() {
+      cat.set({
+        hello: 'world'
+      , goodbye: 'cruel world'
+      });
+      expect(cat.hello).eq('world');
+      expect(cat.goodbye).eq('cruel world');
+    });
+
+    it('accepts space separated list of keys and array of values', function() {
+      cat.set('hello goodbye', ['world', 'cruel world']);
+      expect(cat.hello).eq('world');
+      expect(cat.goodbye).eq('cruel world');
+    });
+  });
+
   describe('#watch', function() {
     it('walks keypaths', function(done) {
       var stray = new Via.Object({best_friend: cat});
@@ -167,6 +190,31 @@ describe('Via.Object', function() {
       obj.set('b',2);
       expect(obj.get('a')).eq(2);
     });
+
+
+    it('can handle sets', function() {
+      var obj = new Via.Object({a:1});
+      obj.synth('b c','a', function(c) {
+        return [c+1,c+2];
+      });
+
+      expect(obj.b).eq(2);
+      expect(obj.c).eq(3);
+    });
+
+    it('can handle reversed sets', function() {
+      var obj = new Via.Object({a:4});
+      obj.synth('a','b c', function(b,c) {
+        return b+c;
+      }, function(a) {
+        return [a/2,a/2];
+      });
+
+      expect(obj.a).eq(4);
+      expect(obj.b).eq(2);
+      expect(obj.c).eq(2);
+    });
+
   });
 
 });
