@@ -26,7 +26,7 @@
     "lib/attributes/data-text.js",
     "lib/attributes/data-html.js",
     "lib/attributes/data-list.js",
-    "lib/attributes/data-for.js",
+    "lib/attributes/data-require.js",
     "lib/attributes/data-val.js",
     "lib/attributes/data-toggle.js",
     "lib/attributes/data-select.js",
