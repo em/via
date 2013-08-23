@@ -15,6 +15,8 @@
     "lib/utils.js",
     "lib/events.js",
     "lib/object.js",
+    "lib/array.js",
+    "lib/resource.js",
     "lib/uri.js",
     "lib/window.js",
     "lib/element.js",
@@ -30,10 +32,6 @@
     "lib/attributes/data-val.js",
     "lib/attributes/data-toggle.js",
     "lib/attributes/data-select.js",
-    "lib/attributes/data-onclick.js",
-    "lib/api.js",
-    "lib/model.js",
-    "lib/collection.js",
-    "lib/collection_page.js"
+    "lib/attributes/data-onclick.js"
   ]
 }
