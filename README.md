@@ -3,10 +3,6 @@
 
   RFP library for node and browser
 
-## Installation
-
-    $ component install recurly/via
-
 ## Watch
   watch() monitors a set of input property names on a Via.Object
   and calls a function when all the inputs are defined, and thereafter
@@ -129,7 +125,7 @@
 
 (MIT License)
 
-Copyright (C) 2011 by Recurly, Inc.
+Copyright (C) 2013 by Emery Denuccio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

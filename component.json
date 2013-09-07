@@ -1,7 +1,7 @@
 {
   "name": "via",
   "description": "RFP library for node and browser",
-  "repo": "recurly/via",
+  "repo": "em/via",
   "version": "0.0.0",
   "keywords": [],
   "dependencies": {
