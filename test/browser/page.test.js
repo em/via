@@ -1,16 +1,27 @@
 describe('<page>', function() {
-  var cats = new Via.Collection(Cat, 'cats/', {}, catsAPI);
-  var template = '<page collection="cats" size=1><div><page_links></page_links></div></page>';
-  var data = {parent:{cats:cats}};
-  var ui = new Via.Element(data, template);
+  var template = '<page><div><page_links></page_links></div></page>';
 
-  it('synthesizes page from collection', function() {
-    expect(ui.data.get('page.collection')).eq(cats);
+  var data, ui; 
+
+  beforeEach(function() {
+    // FIXME: page has to be a Via.Object for links and info to be bound
+    // It's counter-intuitive, with many possible solutions
+    data = {page: new Via.Object({
+      total: 3
+    })};
+
+    ui = new Via.Element(data, template);
   });
 
   context('[size=1]', function() {
+    beforeEach(function() {
+      ui.data.set('page.size', 1)
+    });
+
     context('page 1 of 3', function() {
-      var ui = new Via.Element(data, template);
+      beforeEach(function() {
+        ui.data.set('page.number', 1)
+      });
 
       it('has correct info', function() {
         expect(ui.data.get('info')).eq('Showing 1-1 of 3');
@@ -24,8 +35,9 @@ describe('<page>', function() {
     });
 
     context('page 2 of 3', function() {
-      var ui = new Via.Element(data, template);
-      ui.data.set('page.number',2)
+      beforeEach(function() {
+        ui.data.set('page.number', 2)
+      });
 
       it('has correct info', function() {
         expect(ui.data.get('info')).eq('Showing 2-2 of 3');
@@ -39,8 +51,9 @@ describe('<page>', function() {
     });
 
     context('page 3 of 3', function() {
-      var ui = new Via.Element(data, template);
-      ui.data.set('page.number',3)
+      beforeEach(function() {
+        ui.data.set('page.number', 3)
+      });
 
       it('has correct info', function() {
         expect(ui.data.get('info')).eq('Showing 3-3 of 3');
@@ -55,9 +68,14 @@ describe('<page>', function() {
   });
 
   context('[size=2]', function() {
-    var template = '<page collection="cats" size=2><div><page_links></page_links></div></page>';
+    beforeEach(function() {
+      ui.data.set('page.size', 2)
+    });
+
     context('page 1 of 2', function() {
-      var ui = new Via.Element(data, template);
+      beforeEach(function() {
+        ui.data.set('page.number', 1)
+      });
 
       it('has correct info', function() {
         expect(ui.data.get('info')).eq('Showing 1-2 of 3');
@@ -71,8 +89,9 @@ describe('<page>', function() {
     });
 
     context('page 2 of 2', function() {
-      var ui = new Via.Element(data, template);
-      ui.data.set('page.number', 2)
+      beforeEach(function() {
+        ui.data.set('page.number', 2)
+      });
 
       it('has correct info', function() {
         expect(ui.data.get('info')).eq('Showing 3-3 of 3');
@@ -87,8 +106,9 @@ describe('<page>', function() {
   });
 
   context('[size=3]', function() {
-    var template = '<page collection="cats" size=3><div><page_links></page_links></div></page>';
-    var ui = new Via.Element(data, template);
+    beforeEach(function() {
+      ui.data.set('page.size', 3)
+    });
 
     it('has correct info', function() {
       expect(ui.data.get('info')).eq('Showing 3 of 3');
@@ -102,8 +122,10 @@ describe('<page>', function() {
   });
 
   context('[size=1000]', function() {
-    var template = '<page collection="cats" size=3><div><page_links></page_links></div></page>';
-    var ui = new Via.Element(data, template);
+    var template = '<page><div><page_links></page_links></div></page>';
+    beforeEach(function() {
+      ui.data.set('page.size', 1000)
+    });
 
     it('has correct info', function() {
       expect(ui.data.get('info')).eq('Showing 3 of 3');

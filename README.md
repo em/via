@@ -1,11 +1,11 @@
-
 # Via
-
   RFP library for node and browser
+
+  Work in progress
 
 ## Installation
 
-    $ component install recurly/via
+    $ component install em/via
 
 ## Watch
   watch() monitors a set of input property names on a Via.Object

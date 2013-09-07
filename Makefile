@@ -2,11 +2,13 @@ STYLUS = ./node_modules/stylus/bin/stylus -u nib
 JS_SOURCES = *.js lib/*.js lib/elements/*.js lib/attributes/*.js
 HTML_SOURCES = lib/elements/templates/*.html
 COMPONENT_SOURCES = component.json $(JS_SOURCES) 
+HTML_SOURCES = lib/elements/templates/*.html
 
 all: node_modules build/via.js
 
 build/via.js: $(COMPONENT_SOURCES)
 	mkdir -p build
+	find $(HTML_SOURCES) -exec component convert {} \;
 	component build -s Via -o build -n via
 
 test-client:

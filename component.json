@@ -15,12 +15,15 @@
     "lib/utils.js",
     "lib/events.js",
     "lib/object.js",
+    "lib/array.js",
+    "lib/resource.js",
     "lib/uri.js",
     "lib/window.js",
     "lib/element.js",
     "lib/elements/index.js",
     "lib/elements/page.js",
     "lib/elements/page_links.js",
+    "lib/elements/pagination.js",
     "lib/attributes/index.js",
     "lib/attributes/data-class.js",
     "lib/attributes/data-text.js",
@@ -30,10 +33,6 @@
     "lib/attributes/data-val.js",
     "lib/attributes/data-toggle.js",
     "lib/attributes/data-select.js",
-    "lib/attributes/data-onclick.js",
-    "lib/api.js",
-    "lib/model.js",
-    "lib/collection.js",
-    "lib/collection_page.js"
+    "lib/attributes/data-onclick.js"
   ]
 }
