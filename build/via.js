@@ -1,4 +1,5 @@
 ;(function(){
+
 /**
  * Require the given path.
  *
@@ -7,27 +8,32 @@
  * @api public
  */
 
-function require(p, parent, orig){
-  var path = require.resolve(p)
-    , mod = require.modules[path];
+function require(path, parent, orig) {
+  var resolved = require.resolve(path);
 
   // lookup failed
-  if (null == path) {
-    orig = orig || p;
+  if (null == resolved) {
+    orig = orig || path;
     parent = parent || 'root';
-    throw new Error('failed to require "' + orig + '" from "' + parent + '"');
+    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
+    err.path = orig;
+    err.parent = parent;
+    err.require = true;
+    throw err;
   }
+
+  var module = require.modules[resolved];
 
   // perform real require()
   // by invoking the module's
   // registered function
-  if (!mod.exports) {
-    mod.exports = {};
-    mod.client = mod.component = true;
-    mod.call(this, mod, mod.exports, require.relative(path));
+  if (!module.exports) {
+    module.exports = {};
+    module.client = module.component = true;
+    module.call(this, module.exports, require.relative(resolved), module);
   }
 
-  return mod.exports;
+  return module.exports;
 }
 
 /**
@@ -56,19 +62,22 @@ require.aliases = {};
  * @api private
  */
 
-require.resolve = function(path){
-  var orig = path
-    , reg = path + '.js'
-    , regJSON = path + '.json'
-    , index = path + '/index.js'
-    , indexJSON = path + '/index.json';
+require.resolve = function(path) {
+  if (path.charAt(0) === '/') path = path.slice(1);
 
-  return require.modules[reg] && reg
-    || require.modules[regJSON] && regJSON
-    || require.modules[index] && index
-    || require.modules[indexJSON] && indexJSON
-    || require.modules[orig] && orig
-    || require.aliases[index];
+  var paths = [
+    path,
+    path + '.js',
+    path + '.json',
+    path + '/index.js',
+    path + '/index.json'
+  ];
+
+  for (var i = 0; i < paths.length; i++) {
+    var path = paths[i];
+    if (require.modules.hasOwnProperty(path)) return path;
+    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
+  }
 };
 
 /**
@@ -100,15 +109,15 @@ require.normalize = function(curr, path) {
 };
 
 /**
- * Register module at `path` with callback `fn`.
+ * Register module at `path` with callback `definition`.
  *
  * @param {String} path
- * @param {Function} fn
+ * @param {Function} definition
  * @api private
  */
 
-require.register = function(path, fn){
-  require.modules[path] = fn;
+require.register = function(path, definition) {
+  require.modules[path] = definition;
 };
 
 /**
@@ -119,9 +128,10 @@ require.register = function(path, fn){
  * @api private
  */
 
-require.alias = function(from, to){
-  var fn = require.modules[from];
-  if (!fn) throw new Error('failed to alias "' + from + '", it does not exist');
+require.alias = function(from, to) {
+  if (!require.modules.hasOwnProperty(from)) {
+    throw new Error('Failed to alias "' + from + '", it does not exist');
+  }
   require.aliases[to] = from;
 };
 
@@ -140,7 +150,7 @@ require.relative = function(parent) {
    * lastIndexOf helper.
    */
 
-  function lastIndexOf(arr, obj){
+  function lastIndexOf(arr, obj) {
     var i = arr.length;
     while (i--) {
       if (arr[i] === obj) return i;
@@ -152,40 +162,41 @@ require.relative = function(parent) {
    * The relative require() itself.
    */
 
-  function fn(path){
-    var orig = path;
-    path = fn.resolve(path);
-    return require(path, parent, orig);
+  function localRequire(path) {
+    var resolved = localRequire.resolve(path);
+    return require(resolved, parent, path);
   }
 
   /**
    * Resolve relative to the parent.
    */
 
-  fn.resolve = function(path){
+  localRequire.resolve = function(path) {
+    var c = path.charAt(0);
+    if ('/' == c) return path.slice(1);
+    if ('.' == c) return require.normalize(p, path);
+
     // resolve deps by returning
     // the dep in the nearest "deps"
     // directory
-    if ('.' != path.charAt(0)) {
-      var segs = parent.split('/');
-      var i = lastIndexOf(segs, 'deps') + 1;
-      if (!i) i = 0;
-      path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
-      return path;
-    }
-    return require.normalize(p, path);
+    var segs = parent.split('/');
+    var i = lastIndexOf(segs, 'deps') + 1;
+    if (!i) i = 0;
+    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
+    return path;
   };
 
   /**
    * Check if module is defined at `path`.
    */
 
-  fn.exists = function(path){
-    return !! require.modules[fn.resolve(path)];
+  localRequire.exists = function(path) {
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
-  return fn;
-};require.register("component-domify/index.js", function(module, exports, require){
+  return localRequire;
+};
+require.register("component-domify/index.js", function(exports, require, module){
 
 /**
  * Expose `parse`.
@@ -259,11 +270,11 @@ function parse(html) {
 }
 
 });
-require.register("via/index.js", function(module, exports, require){
+require.register("via/index.js", function(exports, require, module){
 module.exports = require('./lib/via');
 
 });
-require.register("via/lib/via.js", function(module, exports, require){
+require.register("via/lib/via.js", function(exports, require, module){
 var Via = module.exports = {};
 Via.utils = require('./utils');
 Via.Object = require('./object');
@@ -278,7 +289,7 @@ if(typeof window !== 'undefined') {
 }
 
 });
-require.register("via/lib/utils.js", function(module, exports, require){
+require.register("via/lib/utils.js", function(exports, require, module){
 var utils = module.exports = {};
 
 /**
@@ -565,7 +576,7 @@ utils.urlParams = function(params) {
 }
 
 });
-require.register("via/lib/events.js", function(module, exports, require){
+require.register("via/lib/events.js", function(exports, require, module){
 var utils = require('./utils');
 
 module.exports = Events;
@@ -642,7 +653,7 @@ Events.mixin	= function(destObject){
 }
 
 });
-require.register("via/lib/object.js", function(module, exports, require){
+require.register("via/lib/object.js", function(exports, require, module){
 module.exports = ReactiveObject;
 
 var Events = require('./events')
@@ -1074,7 +1085,7 @@ ReactiveObject.prototype = {
 Events.mixin(ReactiveObject);
 
 });
-require.register("via/lib/array.js", function(module, exports, require){
+require.register("via/lib/array.js", function(exports, require, module){
 module.exports = ReactiveArray;
 
 var ReactiveObject = require('./object')
@@ -1105,7 +1116,7 @@ ReactiveArray.prototype = new ReactiveObject({
 });
 
 });
-require.register("via/lib/resource.js", function(module, exports, require){
+require.register("via/lib/resource.js", function(exports, require, module){
 module.exports = ReactiveResource;
 
 var ReactiveObject = require('./object')
@@ -1170,7 +1181,7 @@ ReactiveResource.prototype = new ReactiveObject({
 });
 
 });
-require.register("via/lib/uri.js", function(module, exports, require){
+require.register("via/lib/uri.js", function(exports, require, module){
 module.exports = ReactiveURI;
 
 var ReactiveObject = require('./object'),
@@ -1307,7 +1318,7 @@ function absolute(base, relative) {
 }
 
 });
-require.register("via/lib/window.js", function(module, exports, require){
+require.register("via/lib/window.js", function(exports, require, module){
 var ReactiveObject = require('./object'),
     ReactiveURI = require('./uri');
 
@@ -1352,7 +1363,7 @@ function ReactiveWindow(window) {
 ReactiveWindow.prototype = new ReactiveObject();
 
 });
-require.register("via/lib/element.js", function(module, exports, require){
+require.register("via/lib/element.js", function(exports, require, module){
 module.exports = ReactiveElement;
 
 var ReactiveObject = require('./object')
@@ -1555,14 +1566,14 @@ ReactiveElement.prototype = new ReactiveObject({
 });
 
 });
-require.register("via/lib/elements/index.js", function(module, exports, require){
+require.register("via/lib/elements/index.js", function(exports, require, module){
 module.exports = {
   page: require('./page')
 , page_links: require('./page_links')
 }
 
 });
-require.register("via/lib/elements/page.js", function(module, exports, require){
+require.register("via/lib/elements/page.js", function(exports, require, module){
 module.exports = function page() {
 
   this.data.synth('page', 'src');
@@ -1592,7 +1603,7 @@ module.exports = function page() {
 
 
 });
-require.register("via/lib/elements/page_links.js", function(module, exports, require){
+require.register("via/lib/elements/page_links.js", function(exports, require, module){
 module.exports = function(ui,attrs) {
 
   // TODO: Should this be a generic thing?
@@ -1663,7 +1674,7 @@ module.exports = function(ui,attrs) {
 module.exports.template = '<div class="page_links"><span data-html="links" class="links"></span></div>';
 
 });
-require.register("via/lib/attributes/index.js", function(module, exports, require){
+require.register("via/lib/attributes/index.js", function(exports, require, module){
 var index = [
   'list'
 , 'text'
@@ -1681,7 +1692,7 @@ for(var i=0,l=index.length; i < l; ++i) {
 }
 
 });
-require.register("via/lib/attributes/data-class.js", function(module, exports, require){
+require.register("via/lib/attributes/data-class.js", function(exports, require, module){
 /**
  * Bind a class name to a synthetic attribute 
  */
@@ -1701,7 +1712,7 @@ module.exports = function(ui,value) {
 };
 
 });
-require.register("via/lib/attributes/data-text.js", function(module, exports, require){
+require.register("via/lib/attributes/data-text.js", function(exports, require, module){
 /**
  * Bind the innerText of a single element to a synthetic attribute
  */
@@ -1722,7 +1733,7 @@ module.exports = function(ui,value) {
 
 
 });
-require.register("via/lib/attributes/data-html.js", function(module, exports, require){
+require.register("via/lib/attributes/data-html.js", function(exports, require, module){
 /**
  * Bind the innerHTML of an element to a synthetic attribute
  */
@@ -1745,7 +1756,7 @@ module.exports = function(ui,attr) {
 
 
 });
-require.register("via/lib/attributes/data-list.js", function(module, exports, require){
+require.register("via/lib/attributes/data-list.js", function(exports, require, module){
 var ReactiveElement = require('../element')
   , utils = require('../utils');
 
@@ -1792,7 +1803,7 @@ module.exports = function(ui,value,template) {
 
 
 });
-require.register("via/lib/attributes/data-require.js", function(module, exports, require){
+require.register("via/lib/attributes/data-require.js", function(exports, require, module){
 module.exports = function(ui,attr) {
   var elem = this;
   var empty = this.querySelector('empty');
@@ -1815,7 +1826,7 @@ module.exports = function(ui,attr) {
 
 
 });
-require.register("via/lib/attributes/data-val.js", function(module, exports, require){
+require.register("via/lib/attributes/data-val.js", function(exports, require, module){
 /**
  * Bind an input val to a synthetic attribute 
  */
@@ -1833,7 +1844,7 @@ module.exports = function(ui,value) {
 };
 
 });
-require.register("via/lib/attributes/data-toggle.js", function(module, exports, require){
+require.register("via/lib/attributes/data-toggle.js", function(exports, require, module){
 /**
  * Make the element toggle a property when clicked.
  */
@@ -1846,7 +1857,7 @@ module.exports = function(ui,attr) {
 
 
 });
-require.register("via/lib/attributes/data-select.js", function(module, exports, require){
+require.register("via/lib/attributes/data-select.js", function(exports, require, module){
 var ReactiveElement = require('../element');
 
 
@@ -1886,7 +1897,7 @@ function same(a,b) {
 }
 
 });
-require.register("via/lib/attributes/data-onclick.js", function(module, exports, require){
+require.register("via/lib/attributes/data-onclick.js", function(exports, require, module){
 module.exports = function(ui,attr) {
   
   this.addEventListener('click', function(e) {
@@ -1905,9 +1916,11 @@ module.exports = function(ui,attr) {
 
 });
 require.alias("component-domify/index.js", "via/deps/domify/index.js");
-  if ("undefined" == typeof module) {
-    window.Via = require("via");
-  } else {
-    module.exports = require("via");
-  }
-})();
+require.alias("component-domify/index.js", "domify/index.js");
+if (typeof exports == "object") {
+  module.exports = require("via");
+} else if (typeof define == "function" && define.amd) {
+  define(function(){ return require("via"); });
+} else {
+  this["Via"] = require("via");
+}})();
